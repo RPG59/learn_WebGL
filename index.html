@@ -1,12 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
 </head>
 <body>
-	<h1>Works</h1>
-	
-<script src="./src/js/main.js"></script>
+
+<!-- <img src="./img/test.png"> -->
+
+<canvas id="3D" width="640" height="480"></canvas>
+
+<script id="vertexShaderSource" type="x-shader/x-vertex">
+  attribute vec3 aVertexPosition;
+  attribute vec2 aVertexTextureCoords;
+  attribute vec3 aVertexNormal;
+  //const vec3 aVertexNormal = vec3(1.0, 1.0, 1.0);
+
+  varying vec2 vTextureCoords;
+  varying vec3 vLightWeighting;
+  
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
+  uniform mat3 uNMatrix;
+
+  uniform vec3 uLightPosition;
+  uniform vec3 uAmbientLightColor;
+  uniform vec3 uDiffuseLightColor;
+  uniform vec3 uSpecularLightColor;
+
+  uniform vec3 uAmbientMaterialColor;
+  uniform vec3 uDiffuseMaterialColor;
+  uniform vec3 uSpecularMaterialColor;
+
+  const float shininess = 16.0;
+
+  void main(void) {
+    vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
+    vec3 vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
+
+    vec3 lightDirection = normalize(uLightPosition - vertexPositionEye3);
+    
+    vec3 normal = normalize(uNMatrix * aVertexNormal);
+
+    float diffuseLIghtDot = max(dot(normal, lightDirection), 0.0);
+
+    vec3 reflectionVector = normalize(reflect(-lightDirection, normal));
+
+    vec3 viewVectorEye = -normalize(vertexPositionEye3);
+
+    float specularLIghtDot = max(dot(reflectionVector, viewVectorEye), 0.0);
+
+    float specularLIghtParam = pow(specularLIghtDot, shininess);
+
+    vLightWeighting = uAmbientMaterialColor *uAmbientLightColor * 2.0
+    + uDiffuseMaterialColor * uDiffuseLightColor * diffuseLIghtDot * 2.0
+    + uSpecularMaterialColor * uSpecularLightColor * specularLIghtParam * 2.0;
+
+    //vLightWeighting = uDiffuseMaterialColor * uDiffuseLightColor * diffuseLIghtDot * 2.0;
+
+    gl_Position = uMVMatrix * uPMatrix  * vec4(aVertexPosition, 1.0);
+    vTextureCoords = aVertexTextureCoords;
+}
+
+
+</script>
+
+<script id="fragmentShaderSource" type="x-shader/x-fragment">
+precision mediump float;
+
+uniform sampler2D uSampler;
+varying vec2 vTextureCoords;
+varying vec3 vLightWeighting;
+ 
+  void main(void) {
+    vec4 texelColor = texture2D(uSampler, vTextureCoords);
+    gl_FragColor = vec4(vLightWeighting, texelColor.a);
+  }
+
+</script>
+
+<script>
+    const canvas = document.getElementById('3D')
+
+    try {
+        gl = canvas.getContext('webgl2');
+    } catch (e) {
+        console.log(e);
+    }
+    console.log(gl);
+
+    if (!gl) {
+        console.log('GL context is not created!');
+    }
+</script>
+
+<script src="./src/lib/gl-matrix-min.js"></script>
+<script src="./src/IndexBuffer.js"></script>
+<script src="./src/arrayBuffer.js"></script>
+<script src="./src/Renderer.js"></script>
+<script src="./src/shaders.js"></script>
+
+<script src="./src/main.js"></script>
 </body>
 </html>

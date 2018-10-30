@@ -10,13 +10,13 @@ gulp.task('connect', () => {
 })
 
 gulp.task('reload', () => {
-	gulp.src('src/js/*.js')
+	gulp.src('src/*.js')
 	.pipe(connect.reload())
 
 })
 
 gulp.task('watch', () => {
-	gulp.watch(['src/js/*.js', 'index.html'], ['reload']);
+	gulp.watch(['src/*.js', 'index.html'], ['reload']);
 })
 
 gulp.task('default', ['connect', 'watch'])
